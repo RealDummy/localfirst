@@ -12,14 +12,7 @@ pub struct NonVolitileCrdt<Inner: Crdt + Serialize + for<'d> Deserialize<'d>> {
 impl<T: Crdt + Serialize + for<'d> Deserialize<'d>> Crdt for NonVolitileCrdt<T> {
     type Clock = T::Clock;
     type Operation = T::Operation;
-
-    fn next_clock(&self) -> Self::Clock {
-        self.inner.next_clock()
-    }
-    fn apply(&mut self, op: &Self::Operation, op_clock: &Self::Clock) {
-        self.inner.apply(op, op_clock);
-    }
-    fn update_clock(&mut self, other: Self::Clock) {
+    fn update_clock(&mut self, other: &Self::Clock) {
         self.inner.update_clock(other);
     }
     fn local_op(&mut self, op: &Self::Operation) {
@@ -30,23 +23,42 @@ impl<T: Crdt + Serialize + for<'d> Deserialize<'d>> Crdt for NonVolitileCrdt<T> 
         self.file.set_len(data.as_bytes().len() as u64).unwrap();
         self.file.flush().unwrap();
     }
+    fn recv_op(&mut self, op: &Self::Operation, op_clock: &Self::Clock) {
+        self.inner.recv_op(op, op_clock);
+        self.flush();
+
+    }
 }
 
-impl<T: Crdt + Serialize + for<'d> Deserialize<'d> + Default> NonVolitileCrdt<T> {
-    pub fn new(mut file: File) -> Self {
-        let mut buf = String::new();
-        file.read_to_string(&mut buf).unwrap();
-        let inner = ron::from_str(&buf).unwrap_or_default();
-
+impl<T: Crdt + Serialize + for<'d> Deserialize<'d>> NonVolitileCrdt<T> {
+    pub fn new(file: File, inner: T) -> Self {
         Self {
             inner,
             file
         }
+    }
+    pub fn from_file(mut file: File) -> Option<Self> {
+        let mut buf = String::new();
+        file.read_to_string(&mut buf).ok()?;
+        let inner = ron::from_str(&buf).ok()?;
+
+        Some(Self {
+            inner,
+            file
+        })
     }
     pub fn inner(&self) -> &T {
         &self.inner
     }
     pub fn inner_mut(&mut self) -> &mut T {
         &mut self.inner
+    }
+    pub fn flush(&mut self) {
+        self.file.seek(std::io::SeekFrom::Start(0)).unwrap();
+        let data = ron::to_string(&self.inner).unwrap();
+        self.file.write_all(data.as_bytes()).unwrap();
+        self.file.set_len(data.as_bytes().len() as u64).unwrap();
+        self.file.flush().unwrap();
+
     }
 }

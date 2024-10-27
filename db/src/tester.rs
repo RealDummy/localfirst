@@ -35,7 +35,7 @@ impl Tester {
     pub fn test_random(&mut self) -> HashSet<i32> {
         let f = std::fs::File::options().create(true).read(true).write(true).open("test_random").unwrap();
 
-        let mut gset = NonVolitileCrdt::<GrowSet<i32>>::new(f);
+        let mut gset = NonVolitileCrdt::<GrowSet<i32>>::new(f, GrowSet::new(1));
         let mut nexts: Vec<_> = self.input.iter().map(|v| v.iter()).collect();
         loop {
             let r: usize = random::<usize>() % nexts.len();
@@ -49,7 +49,7 @@ impl Tester {
                         Message::Add(n) => n,
                         Message::Restart => {
                             let f = std::fs::File::options().create(true).read(true).write(true).open("test_random").unwrap();
-                            gset = NonVolitileCrdt::<GrowSet<i32>>::new(f);
+                            gset = NonVolitileCrdt::<GrowSet<i32>>::from_file(f).unwrap();
                             continue;
 
                         }
