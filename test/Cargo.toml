@@ -6,8 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+hyper = {version = "1.5.0", features = ["server", "client", "http1"]}
 rand = "0.8.5"
 ratatui = "0.29.0"
 ron = "0.8.1"
 serde = {version="1.0.213", features=["derive"]}
+tokio = { version = "1", features = ["full"] }
 tui-textarea = "0.7.0"

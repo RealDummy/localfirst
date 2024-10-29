@@ -12,6 +12,9 @@ pub struct NonVolitileCrdt<Inner: Crdt + Serialize + for<'d> Deserialize<'d>> {
 impl<T: Crdt + Serialize + for<'d> Deserialize<'d>> Crdt for NonVolitileCrdt<T> {
     type Clock = T::Clock;
     type Operation = T::Operation;
+    fn get_clock(&self) -> &Self::Clock {
+        self.inner().get_clock()
+    }
     fn update_clock(&mut self, other: &Self::Clock) {
         self.inner.update_clock(other);
     }

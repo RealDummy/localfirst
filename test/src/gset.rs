@@ -119,6 +119,9 @@ impl<T: Hash + Eq> GrowSet<T> {
 impl<T: Hash + Eq + Clone> crate::crdt::Crdt for GrowSet<T> {
     type Clock = Clock;
     type Operation = T;
+    fn get_clock(&self) -> &Self::Clock {
+        &self.clock
+    }
     fn update_clock(&mut self, other: &Self::Clock) {
         self.clock.update(other);
     }
